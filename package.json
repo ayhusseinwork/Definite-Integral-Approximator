@@ -1,19 +1,10 @@
 {
-  "name": "integral-approximator-ui",
+  "name": "definite-integral-approximator",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.3",
-    "vite": "^5.4.10"
+    "build:cpp": "mkdir -p bin && g++ -std=c++17 -O2 -o bin/integral_approx integral_approximation.cpp",
+    "start": "npm run build:cpp && node server.js"
   }
 }

@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple C++ Integral UI</title>
+    <style>
+      :root {
+        --bg: #f4f7f2;
+        --bg-accent: #dfe9dc;
+        --card: #ffffff;
+        --text: #122017;
+        --muted: #5a695d;
+        --line: #d5dfd4;
+        --primary: #1f6f49;
+        --primary-hover: #175239;
+        --error: #b00020;
+        --shadow: 0 12px 34px rgba(15, 39, 27, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 0% 0%, var(--bg-accent), transparent 45%),
+          radial-gradient(circle at 100% 20%, #e7f1e5, transparent 40%),
+          var(--bg);
+      }
+
+      .app {
+        width: min(900px, 100% - 32px);
+        margin: 28px auto;
+        display: grid;
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-size: 18px;
+      }
+
+      p {
+        margin: 8px 0 0;
+      }
+
+      .sub {
+        color: var(--muted);
+      }
+
+      .equation {
+        margin-top: 8px;
+        display: inline-block;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #f8fbf7;
+        font-size: 13px;
+      }
+
+      .row {
+        margin: 12px 0;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        color: #22392a;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        font-size: 14px;
+        border-radius: 10px;
+      }
+
+      input,
+      select {
+        padding: 10px;
+        border: 1px solid #c3d3c2;
+        background: #fff;
+        color: #14271b;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 2px solid #96cfb1;
+        border-color: #77bc98;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 10px;
+      }
+
+      .coeff-box {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        background: #fcfefd;
+      }
+
+      .button-row {
+        margin-top: 14px;
+      }
+
+      button {
+        padding: 11px 14px;
+        border: 0;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.04s ease;
+      }
+
+      button:hover {
+        background: var(--primary-hover);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .result-main {
+        font-size: 22px;
+        font-weight: 700;
+        color: #10482f;
+      }
+
+      .results-grid {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 10px;
+      }
+
+      .result-row span {
+        color: var(--muted);
+      }
+
+      .result-row strong {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .error {
+        color: var(--error);
+        min-height: 20px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 600px) {
+        .app {
+          width: calc(100% - 20px);
+          margin: 16px auto;
+        }
+
+        h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <section class="card">
+        <h1>Integral Calculator</h1>
+        <p class="sub">Simple UI that uses your original C++ program (untouched).</p>
+        <p id="formEquation" class="equation">y = mx + b</p>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <label for="formId">Function Form</label>
+          <select id="formId">
+            <option value="1">1) Linear: y = mx + b</option>
+            <option value="2">2) Quadratic: y = ax^2 + bx + c</option>
+            <option value="3">3) Cosine: y = A cos(wx + b) + c</option>
+            <option value="4">4) Sine: y = A sin(wx + b) + c</option>
+            <option value="5">5) Exponential: y = A e^(bx) + c</option>
+            <option value="6">6) Logarithmic: y = A ln(bx + d) + c</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <label>Coefficients</label>
+          <div id="coeffs" class="grid"></div>
+        </div>
+
+        <div class="grid">
+          <div class="row">
+            <label for="lowBound">Lower Bound</label>
+            <input id="lowBound" type="number" step="any" value="0" />
+          </div>
+
+          <div class="row">
+            <label for="upperBound">Upper Bound</label>
+            <input id="upperBound" type="number" step="any" value="10" />
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="methodId">Method</label>
+          <select id="methodId">
+            <option value="1">1) Trapezoid Rule</option>
+            <option value="2">2) Rectangle Rule</option>
+            <option value="3">3) Simpson's Rule</option>
+            <option value="4">4) Compare All</option>
+          </select>
+        </div>
+
+        <div class="button-row">
+          <button id="calculateBtn">Calculate</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Result</h2>
+        <div id="primaryResult" class="result-main">No result yet.</div>
+        <div id="comparisonRows" class="results-grid"></div>
+      </section>
+
+      <div id="error" class="error"></div>
+    </main>
+
+    <script>
+      const formConfig = {
+        1: { equation: 'y = mx + b', keys: ['m', 'b'] },
+        2: { equation: 'y = ax^2 + bx + c', keys: ['a', 'b', 'c'] },
+        3: { equation: 'y = A cos(wx + b) + c', keys: ['A', 'w', 'b', 'c'] },
+        4: { equation: 'y = A sin(wx + b) + c', keys: ['A', 'w', 'b', 'c'] },
+        5: { equation: 'y = A e^(bx) + c', keys: ['A', 'b', 'c'] },
+        6: { equation: 'y = A ln(bx + d) + c', keys: ['A', 'b', 'd', 'c'] }
+      };
+
+      const coeffsEl = document.getElementById('coeffs');
+      const formIdEl = document.getElementById('formId');
+      const methodIdEl = document.getElementById('methodId');
+      const lowEl = document.getElementById('lowBound');
+      const highEl = document.getElementById('upperBound');
+      const primaryResultEl = document.getElementById('primaryResult');
+      const comparisonRowsEl = document.getElementById('comparisonRows');
+      const equationEl = document.getElementById('formEquation');
+      const errorEl = document.getElementById('error');
+      const btn = document.getElementById('calculateBtn');
+
+      function formatNumber(value) {
+        if (!Number.isFinite(value)) return 'Invalid';
+        return value.toLocaleString(undefined, { maximumFractionDigits: 10 });
+      }
+
+      function renderCoeffFields() {
+        const formId = Number(formIdEl.value);
+        const config = formConfig[formId];
+
+        equationEl.textContent = config.equation;
+        coeffsEl.innerHTML = config.keys
+          .map(
+            (key) => `
+              <div class="coeff-box">
+                <label for="coeff_${key}">${key}</label>
+                <input id="coeff_${key}" type="number" step="any" value="1" />
+              </div>
+            `
+          )
+          .join('');
+      }
+
+      formIdEl.addEventListener('change', renderCoeffFields);
+
+      btn.addEventListener('click', async () => {
+        errorEl.textContent = '';
+        comparisonRowsEl.innerHTML = '';
+        primaryResultEl.textContent = 'Calculating...';
+        btn.disabled = true;
+
+        const formId = Number(formIdEl.value);
+        const methodId = Number(methodIdEl.value);
+        const lowBound = Number(lowEl.value);
+        const upperBound = Number(highEl.value);
+
+        const coeffInputs = coeffsEl.querySelectorAll('input[id^="coeff_"]');
+        const coeffs = {};
+        coeffInputs.forEach((el) => {
+          const key = el.id.replace('coeff_', '');
+          coeffs[key] = Number(el.value);
+        });
+
+        try {
+          const res = await fetch('/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ formId, methodId, coeffs, lowBound, upperBound })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Request failed');
+          }
+
+          primaryResultEl.textContent = `Approximation: ${formatNumber(data.result)}`;
+
+          if (data.comparison && Object.keys(data.comparison).length > 0) {
+            const labels = {
+              trapezoid: 'Trapezoid Rule',
+              rectangle: 'Rectangle Rule',
+              simpson: "Simpson's Rule"
+            };
+
+            comparisonRowsEl.innerHTML = Object.entries(data.comparison)
+              .map(
+                ([key, value]) => `
+                  <div class="result-row">
+                    <span>${labels[key] || key}</span>
+                    <strong>${formatNumber(value)}</strong>
+                  </div>
+                `
+              )
+              .join('');
+          }
+        } catch (err) {
+          primaryResultEl.textContent = 'Calculation failed.';
+          errorEl.textContent = err.message || 'Unknown error';
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      renderCoeffFields();
+    </script>
+  </body>
+</html>
