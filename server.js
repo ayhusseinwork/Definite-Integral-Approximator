@@ -35,7 +35,7 @@ function buildInputScript(body) {
     throw new Error('Upper bound must be greater than lower bound.');
   }
 
-  const lines = [String(formId)];
+  const lines = [String(formId), String(lowBound), String(upperBound)];
 
   if (formId === 1) {
     lines.push(String(coeffs.m), String(coeffs.b));
@@ -53,29 +53,43 @@ function buildInputScript(body) {
     throw new Error('All coefficients must be valid numbers.');
   }
 
-  lines.push(String(lowBound), String(upperBound), String(methodId), '1');
+  if (formId === 6) {
+    const b = Number(coeffs.b);
+    const d = Number(coeffs.d);
+    if (b * lowBound + d <= 0 || b * upperBound + d <= 0) {
+      throw new Error('Log form requires bx + d > 0 at both integration bounds.');
+    }
+  }
+
+  lines.push(String(methodId), '1');
   return `${lines.join('\n')}\n`;
 }
 
 function parseOutput(stdout) {
-  const resultMatch = stdout.match(/The definite integral approximately equals:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?|nan|-nan|inf|-inf)/i);
-  if (!resultMatch) {
-    throw new Error('Could not parse result from C++ output.');
-  }
-
-  const result = Number(resultMatch[1]);
-  if (!Number.isFinite(result)) {
-    throw new Error('C++ returned a non-finite result.');
-  }
-
   const comparison = {};
-  const t = stdout.match(/Trapezoid Rule:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
-  const r = stdout.match(/Rectangle Rule:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
-  const s = stdout.match(/Simpson's Rule:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
+  const resultMatch = stdout.match(/The definite integral approximately equals:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?|nan|-nan|inf|-inf)/i);
+  const t = stdout.match(/Trap[ae]zoid(?:al)?(?:\s+Approximation|\s+Rule)?\s*:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
+  const r = stdout.match(/Rectang(?:le|ular)(?:\s+Approximation|\s+Rule)?\s*:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
+  const s = stdout.match(/(?:Simpson'?s Rule|Parabolic Approximation)\s*:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)/i);
 
   if (t) comparison.trapezoid = Number(t[1]);
   if (r) comparison.rectangle = Number(r[1]);
   if (s) comparison.simpson = Number(s[1]);
+
+  let result = resultMatch ? Number(resultMatch[1]) : NaN;
+  if (!Number.isFinite(result)) {
+    if (Number.isFinite(comparison.simpson)) {
+      result = comparison.simpson;
+    } else if (Number.isFinite(comparison.trapezoid)) {
+      result = comparison.trapezoid;
+    } else if (Number.isFinite(comparison.rectangle)) {
+      result = comparison.rectangle;
+    }
+  }
+
+  if (!Number.isFinite(result)) {
+    throw new Error('Could not parse a finite result from C++ output.');
+  }
 
   return {
     result,
