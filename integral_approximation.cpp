@@ -1,4 +1,8 @@
+// Definite Integral Approximator
+// Console program that approximates integrals for multiple function forms
+// using Trapezoid, Rectangle, and Simpson methods.
 
+// Function declarations.
 void integral_program();
 
 void welcome_function();
@@ -7,12 +11,12 @@ int get_form();
 
 void get_bounds(float& low_bound, float& upper_bound);
 
-void get_Coefficients(int form, float& w, float& a, float& b, float& d, float& c, float low_bound, float upper_bound); // Coefficients for any function
+void get_Coefficients(int form, float& w, float& a, float& b, float& d, float& c, float low_bound, float upper_bound); // Routes to the correct coefficient-input overload.
 
-void coefficients(int form, float& b, float& c); // Coefficients for linear
-void coefficients(int form, float& a, float& b, float& c); // Coefficients for quadratic or exponential
-void coefficients(int form, float& A, float& w, float& b, float& c); // Coefficients for sinosoids
-void coefficients(int form, float& a, float& b, float& d, float& c, float low_bound, float upper_bound); // Coefficients for log
+void coefficients(int form, float& b, float& c); // Prompts coefficients for linear form.
+void coefficients(int form, float& a, float& b, float& c); // Prompts coefficients for quadratic/exponential form.
+void coefficients(int form, float& A, float& w, float& b, float& c); // Prompts coefficients for sinusoidal form.
+void coefficients(int form, float& a, float& b, float& d, float& c, float low_bound, float upper_bound); // Prompts coefficients for log form with domain validation.
 
 int get_method();
 
@@ -36,6 +40,9 @@ void restart();
 #include <cstring>
 #include <cmath>
 using namespace std;
+
+// Program entry point:
+// shows title, runs one calculation flow, then offers restart.
 int main() {
 float result;
 welcome_function();
@@ -44,10 +51,8 @@ restart();
 return 0;
 }
 
-// Inputs: None
-// Outputs: Result of a definite integral approximation
-// Purpose: Prompts user for inputs and approximates a definite integral
-// using a method selected by the user.
+// Runs one full solve cycle:
+// choose form -> enter bounds/coefficients -> choose method -> display result.
 
 void integral_program() {
 float result, a, b, d, c, w, low_bound, upper_bound;
@@ -66,14 +71,13 @@ result = method_selector(method, form, w, a, b, d, c, low_bound, upper_bound);
 result_displayer(result, method);
 }
 
+// Displays the program title banner.
 void welcome_function() {
 cout << "\n\tDefinite Integral Approximator\n";
 }
 
-// Inputs: None
-// Outputs: an integer stored in variable form
-// Purpose: prompts the user to enter a number, each of which corresponds to
-// a form of function. It stores this number in variable "form"
+// Prompts the user to choose which function family to integrate.
+// Returns the selected menu number (1-6).
 
 int get_form() {
 
@@ -95,9 +99,7 @@ cin >> form;
 return form;
 }
 
-// Inputs: low_bound and upper_bound, pass by reference
-// Outputs: Void, pass by reference
-// Purpose: Promts user to enter bounds of integration and stores in variables
+// Reads lower and upper integration bounds by reference.
 
 void get_bounds(float& low_bound, float& upper_bound) {
 cout << "\nEnter Lower Bound: ";
@@ -106,10 +108,7 @@ cout << "\nEnter Upper Bound: ";
 cin >> upper_bound;
 }
 
-// Inputs: None
-// Outputs: method
-// Purpose: prompts the user to enter a number, each of which corresponds to
-// a different method of approximation. it returns this number.
+// Prompts the user to choose approximation method (1-4) and returns it.
 
 int get_method() {
 int method;
@@ -127,9 +126,8 @@ cin >> method;
 return method;
 }
 
-// Inputs:
-// Outputs:
-// Purpose:
+// Dispatches to the selected approximation method.
+// For option 4, it prints all methods and returns 0.
 
 float method_selector(int method, int form, float w, float a, float b, float d, float c, float low_bound, float upper_bound) {
 float result = 0;
@@ -143,13 +141,12 @@ result = parabola(form, w, a, b, d, c, low_bound, upper_bound);
 else if (method == 4) {
 compare_methods(form, w, a, b, d, c, low_bound, upper_bound);
 }
+// If method is invalid, returns 0 by default.
 
 return result;
 }
 
-// Inputs:
-// Outputs:
-// Purpose:
+// Prints trapezoid, rectangle, and Simpson estimates for the same inputs.
 
 void compare_methods(int form, float w, float a, float b, float d, float c, float low_bound, float upper_bound) {
 cout << "\nTrapazoid Approximation: " << trapazoids(form, w, a, b, d, c, low_bound, upper_bound);
@@ -157,61 +154,54 @@ cout << "\nRectangular Approximation: " << rectangles(form, w, a, b, d, c, low_b
 cout << "\nParabolic Approximation: " << parabola(form, w, a, b, d, c, low_bound, upper_bound);
 }
 
-// Inputs: form, w, a, b, c, low_bound, and upper_bound
-// Outputs: returns the result of a trapazoidal approximation
-// Purpose: It inputs the form of the function, along with it's coefficients
-// and the lower and upper bounds of integration, and approximates the definite
-// integral using trapazoids.
+// Approximates the definite integral using the trapezoid rule.
 
 float trapazoids(int form, float w, float a, float b, float d, float c, float low_bound, float upper_bound) {
 float result = 0, x = low_bound;
 const int size = 10000;
 float array[size];
 
+// Sample function values over the interval.
 for (int i = 0; i < size; i++) {
 array[i] = f(x, form, w, a, b, d, c);
 x += (upper_bound - low_bound) / size;
 }
 
+// Sum trapezoid areas between neighboring sample points.
 for (int i = 0; i < size - 1; i++)
 result += ((upper_bound - low_bound) / size) * ((array[i] + array[i + 1]) / 2);
 
 return result;
 }
 
-// Inputs: form, w, a, b, c, low_bound, and upper_bound
-// Outputs: returns the result of a rectangular approximation
-// Purpose: It inputs the form of the function, along with it's coefficients
-// and the lower and upper bounds of integration, and approximates the definite
-// integral using rectangles.
+// Approximates the definite integral using left-endpoint rectangles.
 
 float rectangles(int form, float w, float a, float b, float d, float c, float low_bound, float upper_bound) {
 float result = 0, x = low_bound;
 const int size = 10000;
 float array[size];
 
+// Sample function values at left endpoints.
 for (int i = 0; i < size; i++) {
 array[i] = f(x, form, w, a, b, d, c);
 x += (upper_bound - low_bound) / size;
 }
 
+// Sum rectangle areas.
 for (int i = 0; i < size - 1; i++)
 result += ((upper_bound - low_bound) / size) * (array[i]);
 
 return result;
 }
 
-// Inputs: form, w, a, b, c, low_bound, and upper_bound
-// Outputs: returns the result of a parapolic approximation
-// Purpose: It inputs the form of the function, along with it's coefficients
-// and the lower and upper bounds of integration, and approximates the definite
-// integral using parabolas (Simpson's Rule)
+// Approximates the definite integral using Simpson's (parabolic) rule.
 
 float parabola(int form, float w, float a, float b, float d, float c, float low_bound, float upper_bound) {
 float result = 0, x = low_bound;
 const int size = 10000;
 float array[size];
 
+// Sample function values used by Simpson weights.
 for (int i = 0; i < size; i++) {
 array[i] = f(x, form, w, a, b, d, c);
 x += (upper_bound - low_bound) / size;
@@ -219,6 +209,7 @@ x += (upper_bound - low_bound) / size;
 
 float h = (upper_bound - low_bound) / size;
 
+// Apply Simpson coefficients: 1,4,2,4,...,2,1.
 for (int i = 0; i < size - 1; i++) {
 if (i == 0 or i == size - 1)
 result += (h / 3) * array[i];
@@ -231,15 +222,12 @@ result += (h / 3) * 2 * array[i];
 return result;
 }
 
-// Inputs: x, form, w, a, b, c. basically, the form, a variable x, and all the
-// cofficients that might possibly be used for this program
-// Outputs: y
-// Purpose: It inputs the form of the function, along with it's coefficients
-// and a point x. It evaluates the function at x and returns that value.
+// Evaluates the selected function form at x using provided coefficients.
 
 float f(float x, int form, float w, float a, float b, float d, float c) {
 float y;
 
+// Evaluate selected function family at x.
 if (form == 1)
 y = b * x + c;
 else if (form == 2)
@@ -256,11 +244,7 @@ y = a * log(b * x + d) + c;
 return y;
 }
 
-// Inputs: Form, and coefficients w, a, b, c.
-// Outputs: Void, pass by reference.
-// Purpose: Based on previous user inputs, it directs the program to the correct
-// get_coefficient function, and stores the user inputted values using pass by
-// reference.
+// Routes coefficient input to the proper overloaded function based on form.
 
 void get_Coefficients(int form, float& w, float& a, float& b, float& d, float& c, float low_bound, float upper_bound) {
 
@@ -274,9 +258,7 @@ else if (form == 6)
 coefficients(form, a, b, d, c, low_bound, upper_bound);
 }
 
-// Inputs: Form, and coefficients b, the slophttps://www.onlinegdb.com/fork/L99xHsL4H#tab-stdine, and c, the y-intercept.
-// Outputs: Void, pass by reference.
-// Purpose: Promts to user to input the coefficients for their linear function
+// Reads linear coefficients m and b (stored as b and c parameters here).
 
 void coefficients(int form, float& b, float& c) {
 
@@ -288,9 +270,7 @@ cout << "\nEnter the y-intercept (b): ";
 cin >> c;
 }
 
-// Inputs: Form, and coefficients a, b, and c.
-// Outputs: Void, pass by reference.
-// Purpose: Promts to user to input the coefficients for their quadratic function
+// Reads coefficients for quadratic or exponential forms.
 
 void coefficients(int form, float& a, float& b, float& c) {
 
@@ -310,9 +290,7 @@ cout << "\nEnter the third coefficient (c): ";
 cin >> c;
 }
 
-// Inputs: Form, and coefficients A, w, b, and c.
-// Outputs: Void, pass by reference.
-// Purpose: Promts to user to input the coefficients for their sinosoidal function
+// Reads coefficients for cosine/sine forms: A, w, phase b, and offset c.
 
 void coefficients(int form, float& A, float& w, float& b, float& c) {
 
@@ -331,10 +309,8 @@ cout << "\nEnter the coefficient (c): ";
 cin >> c;
 }
 
-// Inputs: Form, and coefficients a, b, d, and c.
-// Outputs: Void, pass by reference.
-// Purpose: Promts to user to input the coefficients for their natural log function.
-// It also checks for discontinuities
+// Reads logarithmic coefficients and validates log-domain at both bounds.
+// Re-prompts recursively if bx + d is non-positive at either bound.
 
 void coefficients(int form, float& a, float& b, float& d, float& c, float low_bound, float upper_bound) {
 
@@ -354,19 +330,15 @@ coefficients(form, a, b, d, c, low_bound, upper_bound);
 }
 }
 
-// Inputs: Result
-// Outputs: Void, outputs to user
-// Purpose: Takes the result of the integral approximation and displays it to user
+// Displays final result for single-method mode.
+// For compare mode (method 4), detailed values are printed elsewhere.
 
 void result_displayer(float result, int method) {
 if (method != 4)
 cout << "\nThe definite integral approximately equals: " << result;
 }
 
-// Inputs: None
-// Outputs: Void, displays to user
-// Purpose: Asks user if they want to restart
-// and if so it starts the integral program again
+// Prompts user to restart and repeats the full program when requested.
 
 void restart() {
 char restart_choice;
